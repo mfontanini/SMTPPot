@@ -1,7 +1,6 @@
 # This code has been taken from https://github.com/bcoe/secure-smtpd/
 
-import secure_smtpd
-import smtpd, base64, secure_smtpd, asynchat, logging
+import smtpd, base64, asynchat, logging
 
 from asyncore import ExitNow
 from smtpd import NEWLINE, EMPTYSTRING
@@ -18,7 +17,6 @@ class SMTPChannel(smtpd.SMTPChannel):
         self.username = None
         self.password = None
         self.credential_validator = credential_validator
-        self.logger = logging.getLogger( secure_smtpd.LOG_NAME )
     
     def smtp_QUIT(self, arg):
         self.push('221 Bye')
@@ -71,8 +69,6 @@ class SMTPChannel(smtpd.SMTPChannel):
     def found_terminator(self):
         line = EMPTYSTRING.join(self.__line)
         
-        if self.debug:
-            self.logger.info('found_terminator(): data: %s' % repr(line))
             
         self.__line = []
         if self.__state == self.COMMAND:
@@ -118,11 +114,13 @@ class SMTPChannel(smtpd.SMTPChannel):
                 else:
                     data.append(text)
             self.__data = NEWLINE.join(data)
+            auth_data = (self.username, self.password) if self.authenticated else None
             status = self.__server.process_message(
                 self.__peer,
                 self.__mailfrom,
                 self.__rcpttos,
-                self.__data
+                self.__data,
+                auth_data
             )
             self.__rcpttos = []
             self.__mailfrom = None

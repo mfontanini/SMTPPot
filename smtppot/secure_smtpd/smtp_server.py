@@ -9,19 +9,10 @@ from Queue import Empty
 from ssl import SSLError
 
 class SMTPServer(smtpd.SMTPServer):
-    
-    def __init__(self, localaddr, remoteaddr, ssl=False, certfile=None, keyfile=None, ssl_version=ssl.PROTOCOL_SSLv23, require_authentication=False, credential_validator=None, maximum_execution_time=30, process_count=5):
+    def __init__(self, localaddr, remoteaddr, banner="ESMTP Postfix (Debian/GNU)", credential_validator=None):
         smtpd.SMTPServer.__init__(self, localaddr, remoteaddr)
-        self.certfile = certfile
-        self.keyfile = keyfile
-        self.ssl_version = ssl_version
-        self.subprocesses = []
-        self.require_authentication = require_authentication
         self.credential_validator = credential_validator
-        self.ssl = ssl
-        self.maximum_execution_time = maximum_execution_time
-        self.process_count = process_count
-        self.process_pool = None
+        smtpd.__version__ = banner
     
     def handle_accept(self):
         pair = self.accept()
@@ -31,6 +22,6 @@ class SMTPServer(smtpd.SMTPServer):
                 self,
                 newsocket,
                 fromaddr,
-                require_authentication=self.require_authentication,
+                require_authentication=False,
                 credential_validator=self.credential_validator
             )

@@ -7,9 +7,9 @@ from smtpd import NEWLINE, EMPTYSTRING
 
 class SMTPChannel(smtpd.SMTPChannel):
     
-    def __init__(self, smtp_server, newsocket, fromaddr, require_authentication=False, credential_validator=None, map=None):
+    def __init__(self, smtp_server, newsocket, fromaddr, require_authentication=False, credential_validator=None):
         smtpd.SMTPChannel.__init__(self, smtp_server, newsocket, fromaddr)
-        asynchat.async_chat.__init__(self, newsocket, map=map)
+        asynchat.async_chat.__init__(self, newsocket)
         
         self.require_authentication = require_authentication
         self.authenticating = False

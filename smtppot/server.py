@@ -13,8 +13,7 @@ class Server(SMTPServer):
             self,
             bind_pair,
             None,
-            credential_validator=self.__credentials_validator,
-            process_count=1
+            credential_validator=self.__credentials_validator
         )
 
     def __extract_domain(self, mail):
@@ -27,7 +26,14 @@ class Server(SMTPServer):
             extern_domains = filter(lambda i: i != self.__domain, domains)
             if any(extern_domains) and auth_data is None:
                 return "530 Authentication required"
-        self.__queue.put(data)
+        extra_headers = [
+            'X-Client-IP: ' + peer[0],
+            'X-RCPT-To: ' + ','.join(rcpttos)
+        ]
+        if auth_data:
+            extra_headers.append('X-Authenticated-Username: ' + auth_data[0])
+        extra_headers.append('')
+        self.__queue.put('\r\n'.join(extra_headers) + data)
     
     def __do_run(self):
         asyncore.loop()

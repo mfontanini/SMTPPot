@@ -14,18 +14,8 @@ class Consumer:
     def process(self):
         while True:
             data = self.__queue.get()
-            print repr(data)
             # We push None when there's nothing left
             if data is None:
                 return
             msg = email.message_from_string(data)
             msg = Message(msg)
-            for i in msg.headers():
-                print i
-    
-    def start(self):
-        self.__thread = Thread(target=self.process)
-        self.__thread.start()
-    
-    def stop(self):
-        self.enqueue(None)

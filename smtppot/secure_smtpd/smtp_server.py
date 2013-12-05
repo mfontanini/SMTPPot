@@ -22,48 +22,15 @@ class SMTPServer(smtpd.SMTPServer):
         self.maximum_execution_time = maximum_execution_time
         self.process_count = process_count
         self.process_pool = None
-        
-    def handle_accept(self):
-        self.process_pool = ProcessPool(self._accept_subprocess, process_count=self.process_count)
-        self.close()
     
-    def _accept_subprocess(self, queue):
-        while True:
-            try:
-                self.socket.setblocking(1)
-                pair = self.accept()
-                map = {}
-                
-                if pair is not None:
-                    
-                    newsocket, fromaddr = pair
-                    newsocket.settimeout(self.maximum_execution_time)
-                    
-                    if self.ssl:
-                        newsocket = ssl.wrap_socket(
-                            newsocket,
-                            server_side=True,
-                            certfile=self.certfile,
-                            keyfile=self.keyfile,
-                            ssl_version=self.ssl_version,
-                        )
-                    channel = SMTPChannel(
-                        self,
-                        newsocket,
-                        fromaddr,
-                        require_authentication=self.require_authentication,
-                        credential_validator=self.credential_validator,
-                        map=map
-                    )
-                    asyncore.loop(map=map)
-            except (ExitNow, SSLError):
-                self._shutdown_socket(newsocket)
-            except Exception, e:
-                self._shutdown_socket(newsocket)
-      
-    def _shutdown_socket(self, s):
-        try:
-            s.shutdown(socket.SHUT_RDWR)
-            s.close()
-        except Exception, e:
-            pass
+    def handle_accept(self):
+        pair = self.accept()
+        if pair is not None:
+            newsocket, fromaddr = pair
+            channel = SMTPChannel(
+                self,
+                newsocket,
+                fromaddr,
+                require_authentication=self.require_authentication,
+                credential_validator=self.credential_validator
+            )

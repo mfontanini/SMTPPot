@@ -1,16 +1,17 @@
 from secure_smtpd import SMTPServer, CredentialsValidator
 import asyncore, time, re
+from multiprocessing import Process
 
 
 class Server(SMTPServer):
-    def __init__(self, credentials, queue, handled_domain='', open_relay=False):
+    def __init__(self, credentials, bind_pair, queue, handled_domain='', open_relay=False):
         self.__credentials_validator = CredentialsValidator(credentials)
         self.__domain = handled_domain
         self.__queue = queue
         self.__open_relay = open_relay
         SMTPServer.__init__(
             self,
-            ('localhost', 1337),
+            bind_pair,
             None,
             credential_validator=self.__credentials_validator,
             process_count=1
@@ -28,6 +29,10 @@ class Server(SMTPServer):
                 return "530 Authentication required"
         self.__queue.put(data)
     
-    def run(self):
+    def __do_run(self):
         asyncore.loop()
+    
+    def run(self):
+        p = Process(target=self.__do_run)
+        p.run()
         

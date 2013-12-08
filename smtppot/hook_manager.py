@@ -21,5 +21,5 @@ class HookManager:
             module = imp.load_source(f.split('.')[0], hooks_dir + "/" + f)
             for name, obj in inspect.getmembers(module):
                 if inspect.isclass(obj) and 'handle_email' in dict(inspect.getmembers(obj)):
-                    print '[+] Loading hook ' + name
                     self.add_hook(obj())
+                    print '[+] Loaded hook "{0}"'.format(name)

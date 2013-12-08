@@ -1,4 +1,4 @@
-import re, email
+import re, email, datetime, hashlib, os
 
 class Message:
     url_regex = re.compile('https?://(?:[a-zA-Z]|[\d]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+')
@@ -6,7 +6,6 @@ class Message:
     def __init__(self, message):
         self.__raw_message = message
         self.__bodies = self.__attachments = None
-        self.__headers = message.items()
         self.__urls = None
     
     def __try_extract_urls(self):
@@ -49,11 +48,30 @@ class Message:
         return self.__bodies
     
     def headers(self):
-        return self.__headers
+        return self.__raw_message.items()
     
     def urls(self):
         self.__try_extract_urls()
         return self.__urls
+    
+    def __str__(self):
+        return str(self.__raw_message)
+    
+    def __try_create_dirs(self, path):
+        if not os.path.isdir(path):
+            os.makedirs(path)
+    
+    def save_to_path(self, base_path):
+        if not os.path.isdir(base_path):
+            raise Exception("Base path does not exist.")
+        now = datetime.datetime.now().date()
+        path = os.path.join(base_path, str(now.year), str(now.month), str(now.day))
+        self.__try_create_dirs(path)
+        data = str(self)
+        file_name = hashlib.sha1(data).hexdigest()
+        fd = open(os.path.join(path, file_name), 'w')
+        fd.write(data)
+        fd.close()
 
 
 class MessagePart:

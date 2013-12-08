@@ -4,6 +4,7 @@ from multiprocessing import Queue, Process
 from smtppot import Consumer, HookManager, Server
 import asyncore
 import signal, time
+import traceback
 
 
 def run_consumer(queue):
@@ -13,8 +14,10 @@ def run_consumer(queue):
         signal.signal(signal.SIGINT, signal.SIG_IGN)
         consumer = Consumer(queue, hook_manager)
         consumer.process()
-    except Exception as ex:
+    except KeyboardInterrupt:
         pass
+    except Exception as ex:
+        print traceback.format_exc()
 
 credentials = [
     ('user', 'pass')
@@ -27,7 +30,9 @@ consumer_proc.start()
 signal.signal(signal.SIGINT, lambda x,y: asyncore.close_all())
 try:
     asyncore.loop()
-except Exception as ex:
+except KeyboardInterrupt:
     pass
+except Exception as ex:
+    print traceback.format_exc()
 queue.put(None)
 consumer_proc.join()

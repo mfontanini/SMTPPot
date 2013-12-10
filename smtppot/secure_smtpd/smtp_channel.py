@@ -2,7 +2,6 @@
 
 import smtpd, base64, asynchat, logging
 
-from asyncore import ExitNow
 from smtpd import NEWLINE, EMPTYSTRING
 
 class SMTPChannel(smtpd.SMTPChannel):
@@ -21,7 +20,6 @@ class SMTPChannel(smtpd.SMTPChannel):
     def smtp_QUIT(self, arg):
         self.push('221 Bye')
         self.close_when_done()
-        raise ExitNow()
         
     def collect_incoming_data(self, data):
         self.__line.append(data)
@@ -62,7 +60,6 @@ class SMTPChannel(smtpd.SMTPChannel):
                 self.push('235 Authentication successful.')
             else:
                 self.push('454 Temporary authentication failure.')
-                raise ExitNow()
     
     # This code is taken directly from the underlying smtpd.SMTPChannel
     # support for AUTH is added.

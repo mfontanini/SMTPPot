@@ -4,8 +4,10 @@ from multiprocessing import Process
 
 
 class Server(SMTPServer):
-    def __init__(self, credentials, bind_pair, queue, handled_domain='', open_relay=False):
-        self.__credentials_validator = CredentialsValidator(credentials)
+    def __init__(self, credentials, bind_pair, queue, handled_domain='', open_relay=False, server_banner=''):
+        self.__credentials_validator = None
+        if credentials:
+            self.__credentials_validator = CredentialsValidator(credentials)
         self.__domain = handled_domain
         self.__queue = queue
         self.__open_relay = open_relay
@@ -13,7 +15,8 @@ class Server(SMTPServer):
             self,
             bind_pair,
             None,
-            credential_validator=self.__credentials_validator
+            credential_validator=self.__credentials_validator,
+            banner=server_banner
         )
 
     def __extract_domain(self, mail):

@@ -9,7 +9,7 @@ from Queue import Empty
 from ssl import SSLError
 
 class SMTPServer(smtpd.SMTPServer):
-    def __init__(self, localaddr, remoteaddr, banner="ESMTP Postfix (Debian/GNU)", credential_validator=None):
+    def __init__(self, localaddr, remoteaddr, banner="", credential_validator=None):
         smtpd.SMTPServer.__init__(self, localaddr, remoteaddr)
         self.credential_validator = credential_validator
         smtpd.__version__ = banner

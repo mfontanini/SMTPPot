@@ -9,10 +9,11 @@ from Queue import Empty
 from ssl import SSLError
 
 class SMTPServer(smtpd.SMTPServer):
-    def __init__(self, localaddr, remoteaddr, banner="", credential_validator=None):
+    def __init__(self, localaddr, remoteaddr, banner="", credential_validator=None, rcptto_callback=None):
         smtpd.SMTPServer.__init__(self, localaddr, remoteaddr)
         self.credential_validator = credential_validator
         smtpd.__version__ = banner
+        self.rcptto_callback = rcptto_callback
     
     def handle_accept(self):
         pair = self.accept()
@@ -23,5 +24,6 @@ class SMTPServer(smtpd.SMTPServer):
                 newsocket,
                 fromaddr,
                 require_authentication=False,
-                credential_validator=self.credential_validator
+                credential_validator=self.credential_validator,
+                rcptto_callback=self.rcptto_callback
             )

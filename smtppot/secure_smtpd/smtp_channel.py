@@ -6,7 +6,7 @@ from smtpd import NEWLINE, EMPTYSTRING
 
 class SMTPChannel(smtpd.SMTPChannel):
     
-    def __init__(self, smtp_server, newsocket, fromaddr, require_authentication=False, credential_validator=None):
+    def __init__(self, smtp_server, newsocket, fromaddr, require_authentication=False, credential_validator=None, rcptto_callback=None):
         smtpd.SMTPChannel.__init__(self, smtp_server, newsocket, fromaddr)
         asynchat.async_chat.__init__(self, newsocket)
         
@@ -16,6 +16,7 @@ class SMTPChannel(smtpd.SMTPChannel):
         self.username = None
         self.password = None
         self.credential_validator = credential_validator
+        self.rcptto_callback = rcptto_callback
     
     def smtp_QUIT(self, arg):
         self.push('221 Bye')
@@ -60,6 +61,20 @@ class SMTPChannel(smtpd.SMTPChannel):
                 self.push('235 Authentication successful.')
             else:
                 self.push('454 Temporary authentication failure.')
+    
+    def smtp_RCPT(self, arg):
+        if not self.__mailfrom:
+            self.push('503 Error: need MAIL command')
+            return
+        address = self.__getaddr('TO:', arg) if arg else None
+        if not address:
+            self.push('501 Syntax: RCPT TO: <address>')
+            return
+        if not self.rcptto_callback(address, self.authenticated):
+            self.push('550 5.7.1 Relaying denied.')
+        else:
+            self.__rcpttos.append(address)
+            self.push('250 Ok')
     
     # This code is taken directly from the underlying smtpd.SMTPChannel
     # support for AUTH is added.

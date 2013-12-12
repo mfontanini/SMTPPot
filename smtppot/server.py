@@ -16,19 +16,22 @@ class Server(SMTPServer):
             bind_pair,
             None,
             credential_validator=self.__credentials_validator,
-            banner=server_banner
+            banner=server_banner,
+            rcptto_callback=self.check_relaying
         )
+
+    def check_relaying(self, address, authenticated):
+        if not self.__open_relay:
+            domain = self.__extract_domain(address)
+            if domain != self.__domain and not authenticated:
+                return False
+        return True
 
     def __extract_domain(self, mail):
         matches = re.findall('@(.*)', mail)
         return matches[0] if any(matches) else ''
 
     def process_message(self, peer, mailfrom, rcpttos, data, auth_data):
-        if not self.__open_relay:
-            domains = map(self.__extract_domain, rcpttos)
-            extern_domains = filter(lambda i: i != self.__domain, domains)
-            if any(extern_domains) and auth_data is None:
-                return "530 Authentication required"
         extra_headers = [
             'X-Client-IP: ' + peer[0],
             'X-RCPT-To: ' + ','.join(rcpttos)
